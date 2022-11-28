@@ -1,0 +1,19 @@
+.body {
+  height: 90vh;
+}
+
+.main-container {
+  background-color: rgb(252, 252, 252);
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  row-gap: 5%;
+  align-items: center;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: row;
+  column-gap: 40px;
+}

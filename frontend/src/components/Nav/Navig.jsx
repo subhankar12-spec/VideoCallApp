@@ -12,7 +12,7 @@ const Navig = () => {
         <Container>
           <Navbar.Brand href="/">Meetly</Navbar.Brand>
           <Nav className="me-auto w-100 justify-content-end">
-            <Nav.Link href="#home">Login</Nav.Link>
+            <Nav.Link href="/login">Login</Nav.Link>
           </Nav>
         </Container>
       </Navbar>

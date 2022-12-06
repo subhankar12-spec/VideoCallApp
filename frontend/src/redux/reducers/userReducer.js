@@ -15,7 +15,14 @@ import {
   GOOGLE_LOGIN_SUCCESS,
 } from '../constants/userConstants';
 
-export const userReducer = (state = { user: {} }, action) => {
+export const userReducer = (
+  state = {
+    user: localStorage.getItem('users')
+      ? JSON.parse(localStorage.getItem('users'))
+      : [],
+  },
+  action
+) => {
   switch (action.type) {
     case LOGIN_REQUEST:
     case REGISTER_USER_REQUEST:

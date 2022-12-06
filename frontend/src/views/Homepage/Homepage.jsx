@@ -2,6 +2,7 @@ import React from 'react';
 import './HomeStyles.css';
 import Button from 'react-bootstrap/Button';
 import { Link } from 'react-router-dom';
+
 const Homepage = () => {
   return (
     <div className="body">

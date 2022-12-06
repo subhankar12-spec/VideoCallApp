@@ -32,7 +32,7 @@ app.get('/', (req, res) => {
   res.send('Running');
 });
 
-app.use('/', users);
+app.use('/api', users);
 
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 app.use(errorMiddleware);

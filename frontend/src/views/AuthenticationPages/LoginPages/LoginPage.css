@@ -12,3 +12,7 @@
   row-gap: 5%;
   align-items: center;
 }
+
+.button {
+  margin-left: 65px;
+}

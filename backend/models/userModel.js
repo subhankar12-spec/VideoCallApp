@@ -47,6 +47,12 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  meets: [
+    {
+      type: String,
+      ref: 'Meet',
+    },
+  ],
 
   resetPasswordToken: String,
   resetPasswordExpire: Date,

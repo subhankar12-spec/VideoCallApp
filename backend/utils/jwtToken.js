@@ -1,6 +1,21 @@
+const ErrorHander = require('../utils/errorHandler');
+const catchAsyncErrors = require('../middleware/catchAsyncErrors');
+const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
+
+exports.getTokenDetails = async (token) => {
+  if (!token) {
+    return next(new ErrorHander('Please Login to access this resource', 401));
+  }
+
+  const decodedData = jwt.verify(token, process.env.JWT_SECRET);
+
+  const user = await User.findById(decodedData.id);
+  return user;
+};
 // Create Token and saving in cookie
 
-const sendToken = (user, statusCode, res) => {
+exports.sendToken = (user, statusCode, res) => {
   const token = user.getJWTToken();
 
   // options for cookie
@@ -17,5 +32,3 @@ const sendToken = (user, statusCode, res) => {
     token,
   });
 };
-
-module.exports = sendToken;

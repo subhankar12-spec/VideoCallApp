@@ -5,7 +5,7 @@ const {
   logout,
   getUserDetails,
 } = require('../controllers/userController');
-const { isAuthenticatedUser, authorizeRoles } = require('../middleware/auth');
+const { ensureAuthenticated, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -15,6 +15,6 @@ router.route('/login').post(loginUser);
 
 router.route('/logout').get(logout);
 
-router.route('/me').get(isAuthenticatedUser, getUserDetails);
+router.route('/me').get(ensureAuthenticated, getUserDetails);
 
 module.exports = router;

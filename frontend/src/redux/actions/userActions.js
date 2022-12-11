@@ -30,7 +30,9 @@ export const login = (email, password) => async (dispatch) => {
     );
 
     dispatch({ type: LOGIN_SUCCESS, payload: data.user });
-    // localStorage.setItem('users', JSON.stringify(getState().user));
+    console.log(data.user._id, data.token);
+    localStorage.setItem('userID', data.user._id);
+    localStorage.setItem('idToken', data.token);
   } catch (error) {
     dispatch({ type: LOGIN_FAIL, payload: error.response.data.message });
   }

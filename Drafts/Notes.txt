@@ -17,7 +17,9 @@ vite
 npm init vite
 
 
+host=>created meet=>turn audio video and start streaming and set userVideo=>clientSocketEmit("startMeet")=>ServerSocketOn("startMeet")->socket added to the room and ServerSocketEmit("roomID")=>clientSocketOn(""roomID"")->setRoomID and change url(from host=true to host=room?roomID)
 
+when someone joins=>clientSocketEmit("join room")=>the other person added to the room=>ServerSocketEmit("all members") with member info=> for each members peer is created(createPeer=>Peer created and onPeer('Signal)->clientSocketEmit("sending signal")=>ServerSocketOn("sending signal")=>ServerSocketEmit("user joined")to newLyjoined user=>clientSocketOn("user joined"->filtering out own video member and creating new peer(addPeer)=>and onPeer('Signal)->clientSocketEmit("returning signal")->ServerSocketEmit("receiving returned signal") to caller=>clientSocketOn("receiving returned signal" and currentitem.peer.signal(signal))for them,creating a peerobj, adding in peerref and setting peerref in peers state ),peerobj is created,adding in peerref and setting peerref in peers state  for ServerSocketEmit("all members")
 
 
 

@@ -109,6 +109,9 @@ const webSockets = (app) => {
 
         //emit details to frontend
         // console.log('all members', usersInThisRoom);
+        // socket.on('ready', () => {
+        //   io.to(socket.id).emit('all members', usersInThisRoom1);
+        // });
         io.to(socket.id).emit('all members', usersInThisRoom1);
         addMember({
           roomID,
@@ -126,6 +129,7 @@ const webSockets = (app) => {
     });
 
     socket.on('sending signal', (payload) => {
+      console.log('send signal', payload.userToSignal);
       io.to(payload.userToSignal).emit('user joined', {
         signal: payload.signal,
         id: payload.callerID,
@@ -173,12 +177,12 @@ const webSockets = (app) => {
     //     date: new Date(),
     //   });
     // });
-    // socket.on('returning signal', (payload) => {
-    //   io.to(payload.callerID).emit('receiving returned signal', {
-    //     signal: payload.signal,
-    //     id: socket.id,
-    //   });
-    // });
+    socket.on('returning signal', (payload) => {
+      io.to(payload.callerID).emit('receiving returned signal', {
+        signal: payload.signal,
+        id: socket.id,
+      });
+    });
 
     //disconnect user
     socket.on('disconnect', () => {

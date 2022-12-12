@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import io from 'socket.io-client';
 import Peer from 'simple-peer';
-import { APIBaseURL } from '../.././constants';
+import { APIBaseURL } from '../../constants';
 import { useLocation } from 'react-router-dom';
+import { VideoFrame } from '../../components/VideoFrame/VideoFrame';
 //
 // import * as process from 'process';
 // global.process = process;
@@ -25,6 +26,7 @@ const Callpage = () => {
   useEffect(() => {
     init();
   }, []);
+
   const init = useCallback(async () => {
     socketRef.current = io.connect(APIBaseURL);
     //get media stream from user (ask permission from browser)
@@ -34,13 +36,14 @@ const Callpage = () => {
     });
     userVideo.current.srcObject = userStream.current = stream;
 
-    //check if the user is creating a meet pr joining a meet
+    //check if the user is creating a meet or joining a meet
     if (params.get('host') && !params.get('room')) {
       console.log(localStorage.getItem('meetname'));
       socketRef.current.emit('start meet', {
         token: localStorage.getItem('idToken'),
         meetname: localStorage.getItem('meetname'),
       });
+
       socketRef.current.on('roomID', (roomID) => {
         console.log(roomID);
         setRoomId(roomID);
@@ -57,6 +60,7 @@ const Callpage = () => {
         return;
       }
       //if the url is correct , join meet request sent to backend with user details
+      //triggered when call page is called directly
       socketRef.current.emit('join room', {
         roomID: params.get('room'),
         token: localStorage.getItem('idToken'),
@@ -75,7 +79,7 @@ const Callpage = () => {
 
     //get all member details and create peers
     socketRef.current.on('all members', (members) => {
-      console.log('members', members);
+      console.log('members', members, members.id, socketRef.current.id);
       const peers = members.map((member) => {
         const peer = createPeer(member.id, socketRef.current.id, stream);
         console.log('stream', stream);
@@ -94,39 +98,54 @@ const Callpage = () => {
 
     //connection for peer join
     socketRef.current.on('user joined', (payload) => {
-      console.log('user joined');
       const { signal, id, username } = payload;
-      console.log(signal);
-      const peer = addPeer(signal, id, stream);
-      const peerObj = {
-        peerID: id,
-        peer,
-        username,
-      };
-      peersRef.current.push(peerObj);
-      addPeerVideo(peerObj);
-      addToChat({ message: username + ' joined the meet ' });
+      console.log('user joined', username);
+      const item = peersRef.current.find((p) => p.peerID === id);
+      if (!item) {
+        const peer = addPeer(signal, id, stream);
+        const peerObj = {
+          peerID: id,
+          peer,
+          username,
+        };
+        peersRef.current.push(peerObj);
+        addPeerVideo(peerObj);
+        socketRef.current.emit('ready');
+      }
+      // console.log(signal);
+      // const peer = addPeer(signal, id, stream);
+      // const peerObj = {
+      //   peerID: id,
+      //   peer,
+      //   username,
+      // };
+      // peersRef.current.push(peerObj);
+      // addPeerVideo(peerObj);
+      // addToChat({ message: username + ' joined the meet ' });
     });
 
     socketRef.current.on('receiving returned signal', (payload) => {
-      console.log('receiving returned signal');
       const { signal, id } = payload;
-      const item = peersRef.current.find((p) => p.peerID === id);
 
+      const item = peersRef.current.find((p) => p.peerID === id);
+      console.log('receiving returned signal', signal, id);
+      console.log('item', item);
       if (item) {
+        console.log('item signal1');
         item.peer.signal(signal);
+        console.log('item signal2');
       }
     });
 
-    //user disconnected
-    socketRef.current.on('disconnected', ({ id, username }) => {
-      disconnected({ id, username });
-    });
+    // //user disconnected
+    // socketRef.current.on('disconnected', ({ id, username }) => {
+    //   disconnected({ id, username });
+    // });
 
     //error handling
     socketRef.current.on('something broke', (message) => {
       alert(message);
-      exit();
+      // exit();
     });
   }, []);
 
@@ -136,9 +155,9 @@ const Callpage = () => {
     const peer = new Peer({
       initiator: true,
       trickle: false,
-      config: {
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-      },
+      // config: {
+      //   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      // },
       stream,
     });
     console.log('create peer2');
@@ -158,11 +177,17 @@ const Callpage = () => {
     const peer = new Peer({
       initiator: false,
       trickle: false,
+      // config: {
+      //   iceServers: [
+      //     { urls: 'stun:stun.l.google.com:19302' },
+      //     { urls: 'stun:global.stun.twilio.com:3478?transport=udp' },
+      //   ],
+      // },
       stream,
     });
 
     peer.on('signal', (signal) => {
-      console.log(signal);
+      console.log('signal', signal, callerID);
       socketRef.current.emit('returning signal', { signal, callerID });
     });
 
@@ -243,15 +268,18 @@ const Callpage = () => {
       Callpage
       <div>
         {/* //peers video */}
+        {console.log(peers)}
         {peers.map((peer, index) => (
           <div>
-            <p>{/* {peer.username} */} Peer Username</p>
+            <p>{peer.username}</p>
+            {console.log('peers', peer)}
             <VideoFrame key={index} peer={peer.peer} />
           </div>
         ))}
         <div>
           {/* // user video */}
-          <p>{/* {peer.displayName} */}My username</p>
+          {/* <p>{peer.displayName}</p> */}
+          <p>User Video</p>
           <video
             id="my-video"
             muted

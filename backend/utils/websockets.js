@@ -98,12 +98,14 @@ const webSockets = (app) => {
 
         let roomUsers = await io.in(roomID).fetchSockets();
         roomUsers.forEach((obj) => {
-          usersInThisRoom1.push({
-            id: obj.id,
-            username: obj.userName,
-          });
+          if (obj.id != socket.id) {
+            usersInThisRoom1.push({
+              id: obj.id,
+              username: obj.userName,
+            });
+          }
         });
-        console.log('sockets', roomUsers);
+        console.log('usrs', usersInThisRoom1);
         // const usersInThisRoom = Object.keys(roomData.sockets);
         socket.join(roomID);
 
@@ -178,6 +180,7 @@ const webSockets = (app) => {
     //   });
     // });
     socket.on('returning signal', (payload) => {
+      console.log('returning signal');
       io.to(payload.callerID).emit('receiving returned signal', {
         signal: payload.signal,
         id: socket.id,

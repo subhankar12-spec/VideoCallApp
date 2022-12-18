@@ -24,28 +24,30 @@ const Callpage = () => {
   const search = useLocation().search;
   const params = new URLSearchParams(search);
   useEffect(() => {
+    // console.log('useEffect');
     init();
   }, []);
 
   const init = useCallback(async () => {
     socketRef.current = io.connect(APIBaseURL);
+    // console.log('init');
     //get media stream from user (ask permission from browser)
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
+      audio: false,
       video: true,
     });
     userVideo.current.srcObject = userStream.current = stream;
 
     //check if the user is creating a meet or joining a meet
     if (params.get('host') && !params.get('room')) {
-      console.log(localStorage.getItem('meetname'));
+      // console.log(localStorage.getItem('meetname'));
       socketRef.current.emit('start meet', {
         token: localStorage.getItem('idToken'),
         meetname: localStorage.getItem('meetname'),
       });
 
       socketRef.current.on('roomID', (roomID) => {
-        console.log(roomID);
+        // console.log(roomID);
         setRoomId(roomID);
         window.history.replaceState('', '', `?room=${roomID}`);
       });
@@ -79,10 +81,9 @@ const Callpage = () => {
 
     //get all member details and create peers
     socketRef.current.on('all members', (members) => {
-      console.log('members', members, members.id, socketRef.current.id);
+      console.log('members', members);
       const peers = members.map((member) => {
         const peer = createPeer(member.id, socketRef.current.id, stream);
-        console.log('stream', stream);
 
         const peerObj = {
           peerID: member.id,
@@ -92,7 +93,7 @@ const Callpage = () => {
         peersRef.current.push(peerObj);
         return peerObj;
       });
-      console.log('peers', peers);
+
       setPeers(peers);
     });
 
@@ -100,18 +101,18 @@ const Callpage = () => {
     socketRef.current.on('user joined', (payload) => {
       const { signal, id, username } = payload;
       console.log('user joined', username);
-      const item = peersRef.current.find((p) => p.peerID === id);
-      if (!item) {
-        const peer = addPeer(signal, id, stream);
-        const peerObj = {
-          peerID: id,
-          peer,
-          username,
-        };
-        peersRef.current.push(peerObj);
-        addPeerVideo(peerObj);
-        socketRef.current.emit('ready');
-      }
+      // const item = peersRef.current.find((p) => p.peerID === id);
+      // if (!item) {
+      const peer = addPeer(signal, id, stream);
+      const peerObj = {
+        peerID: id,
+        peer,
+        username,
+      };
+      peersRef.current.push(peerObj);
+      addPeerVideo(peerObj);
+      // socketRef.current.emit('ready');
+      // }
       // console.log(signal);
       // const peer = addPeer(signal, id, stream);
       // const peerObj = {
@@ -125,15 +126,14 @@ const Callpage = () => {
     });
 
     socketRef.current.on('receiving returned signal', (payload) => {
+      console.log('receiving returned signal');
       const { signal, id } = payload;
 
       const item = peersRef.current.find((p) => p.peerID === id);
-      console.log('receiving returned signal', signal, id);
-      console.log('item', item);
+
       if (item) {
-        console.log('item signal1');
         item.peer.signal(signal);
-        console.log('item signal2');
+        console.log('Answer accepted');
       }
     });
 
@@ -151,17 +151,22 @@ const Callpage = () => {
 
   //Create new peer add ice servers
   const createPeer = useCallback((userToSignal, callerID, stream) => {
-    console.log('create peer', userToSignal, callerID, stream);
+    console.log('create peer Called');
     const peer = new Peer({
       initiator: true,
+      offerOptions: {
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
+      },
       trickle: false,
       // config: {
       //   iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
       // },
       stream,
     });
-    console.log('create peer2');
     peer.on('signal', (signal) => {
+      console.log('sending signal', signal);
+
       socketRef.current.emit('sending signal', {
         userToSignal,
         callerID,
@@ -173,9 +178,14 @@ const Callpage = () => {
   }, []);
 
   const addPeer = useCallback((incomingSignal, callerID, stream) => {
-    // console.log("add peer")
+    console.log('add peer');
     const peer = new Peer({
       initiator: false,
+      /*https://github.com/feross/simple-peer/issues/95*/
+      answerOptions: {
+        offerToReceiveAudio: false,
+        offerToReceiveVideo: false,
+      },
       trickle: false,
       // config: {
       //   iceServers: [
@@ -187,11 +197,12 @@ const Callpage = () => {
     });
 
     peer.on('signal', (signal) => {
-      console.log('signal', signal, callerID);
+      console.log('returning signal', signal);
       socketRef.current.emit('returning signal', { signal, callerID });
     });
 
     peer.signal(incomingSignal);
+    console.log('Hehe');
     return peer;
   }, []);
 

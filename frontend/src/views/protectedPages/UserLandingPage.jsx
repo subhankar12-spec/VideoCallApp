@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import VideoCallBar from '../../components/VideoCallBar/VideoCallBar';
+import { Grid, Paper } from '@mui/material';
 
 const UserLandingPage = () => {
   const startMeet = async () => {

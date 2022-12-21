@@ -4,11 +4,16 @@ import Peer from 'simple-peer';
 import { APIBaseURL } from '../../constants';
 import { useLocation } from 'react-router-dom';
 import { VideoFrame } from '../../components/VideoFrame/VideoFrame';
-//
+import VideoCallBar from '../../components/VideoCallBar/VideoCallBar';
+import { useNavigate } from 'react-router-dom';
+import { ThemeProvider, Box, createTheme, Grid, styled } from '@mui/material';
+import './Callpage.css';
+// //
 // import * as process from 'process';
 // global.process = process;
 
 const Callpage = () => {
+  const navigate = useNavigate();
   const userVideo = useRef(document.createElement('video'));
   const userStream = useRef();
 
@@ -20,6 +25,9 @@ const Callpage = () => {
   const inputRef = useRef(null);
   const [chats, setChats] = useState([]);
   const [roomID, setRoomId] = useState();
+  const [isPresenting, setIsPresenting] = useState(false);
+  const [screenCastStream, setScreenCastStream] = useState();
+  let peer = null;
 
   const search = useLocation().search;
   const params = new URLSearchParams(search);
@@ -33,7 +41,7 @@ const Callpage = () => {
     // console.log('init');
     //get media stream from user (ask permission from browser)
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: false,
+      audio: true,
       video: true,
     });
     userVideo.current.srcObject = userStream.current = stream;
@@ -210,96 +218,140 @@ const Callpage = () => {
     setPeers((peers) => [...peers, peerObj]);
   }, []);
 
-  // const removePeerVideo = useCallback((id) => {
-  //   setPeers((peers) => peers.filter((peer) => peer.peerID !== id));
-  // }, []);
+  //audio on/off handler
+  const audioHandler = () => {
+    console.log(audio);
+    setAudio(!audio);
+    userStream.current.getAudioTracks()[0].enabled =
+      !userStream.current.getAudioTracks()[0].enabled;
+  };
+  // //video on/off handler
+  const videoHandler = () => {
+    console.log(video);
+    setVideo(!video);
+    userStream.current.getVideoTracks()[0].enabled =
+      !userStream.current.getVideoTracks()[0].enabled;
+  };
 
-  // //disconnect user
-  // const exit = useCallback(() => {
-  //   socketRef.current.disconnect();
-  //   history.replace('/');
-  //   userStream.current?.getTracks().forEach((track) => {
-  //     track.stop();
-  //   });
-  // }, []);
-
-  // const disconnected = useCallback(({ id, username }) => {
-  //   alert(username + 'left the chat');
-  //   addToChat({ message: username + ' left the chat' });
-  //   peersRef.current = peersRef.current.filter((peer) => peer.peerID !== id);
-  //   removePeerVideo(id);
-  // }, []);
+  const disconnect = useCallback(() => {
+    socketRef.current.disconnect();
+    navigate('/protected');
+    userStream.current?.getTracks().forEach((track) => {
+      track.stop();
+    });
+  }, []);
 
   //chat socket connection
-  // useEffect(() => {
-  //   socketRef.current.on('receive-message', (payload) => {
-  //     console.log('read..');
-  //     console.log(payload);
-  //     addToChat(payload);
-  //   });
-  // }, []);
-  // const sendMessage = useCallback((e) => {
-  //   e.preventDefault();
-  //   console.log('send');
-  //   if (inputRef.current && inputRef.current?.value !== '') {
-  //     const val = inputRef.current?.value;
-  //     socketRef.current.emit('message', val);
-  //     const chatObj = {
-  //       sender: auth.displayName,
-  //       message: val,
-  //       id: 'me',
-  //     };
-  //     addToChat(chatObj);
-  //     inputRef.current.value = '';
-  //   }
-  // }, []);
-  // const addToChat = useCallback((chatObj) => {
-  //   console.log(chatObj);
-  //   console.log('add');
-  //   setChats((chats) => [...chats, chatObj]);
-  // }, []);
+  useEffect(() => {
+    socketRef.current.on('receive-message', (payload) => {
+      console.log('read..');
+      console.log(payload);
+      addToChat(payload);
+    });
+  }, []);
+  const sendMessage = useCallback((e) => {
+    e.preventDefault();
+    console.log('send');
+    if (inputRef.current && inputRef.current?.value !== '') {
+      const val = inputRef.current?.value;
+      socketRef.current.emit('message', val);
+      const chatObj = {
+        // sender: auth.displayName,
+        message: val,
+        id: 'me',
+      };
+      addToChat(chatObj);
+      inputRef.current.value = '';
+    }
+  }, []);
+  const addToChat = useCallback((chatObj) => {
+    console.log(chatObj);
+    console.log('add');
+    setChats((chats) => [...chats, chatObj]);
+  }, []);
 
-  // //audio on/off handler
-  // const audioHandler = () => {
-  //   console.log(audio);
-  //   setAudio(!audio);
-  //   userStream.current.getAudioTracks()[0].enabled =
-  //     !userStream.current.getAudioTracks()[0].enabled;
-  // };
-  // //video on/off handler
-  // const videoHandler = () => {
-  //   console.log(video);
-  //   setVideo(!video);
-  //   userStream.current.getVideoTracks()[0].enabled =
-  //     !userStream.current.getVideoTracks()[0].enabled;
-  // };
+  const screenShare = () => {
+    console.log('screenShare');
+    navigator.mediaDevices
+      .getDisplayMedia({ cursor: true })
+      .then((screenStream) => {
+        peers.replaceTrack(
+          userStream.current.getVideoTracks()[0],
+          screenStream.getVideoTracks()[0],
+          userStream.current
+        );
+        setScreenCastStream(screenStream);
+        screenStream.getTracks()[0].onended = () => {
+          peers.replaceTrack(
+            screenStream.getVideoTracks()[0],
+            userStream.current.getVideoTracks()[0],
+            userStream.current
+          );
+        };
+        setIsPresenting(true);
+      });
+  };
+  const stopScreenShare = () => {
+    console.log('StopscreenShare');
+    screenCastStream.getVideoTracks().forEach(function (track) {
+      track.stop();
+    });
+    peers.replaceTrack(
+      screenCastStream.getVideoTracks()[0],
+      userStream.current.getVideoTracks()[0],
+      userStream.current
+    );
+    setIsPresenting(false);
+  };
 
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+    },
+  });
+  const UserBox = styled(Box)({
+    // height: '100%',
+  });
   return (
-    <div>
-      Callpage
-      <div>
-        {/* //peers video */}
-        {console.log(peers)}
-        {peers.map((peer, index) => (
-          <div>
-            <p>{peer.username}</p>
-            {console.log('peers', peer)}
-            <VideoFrame key={index} peer={peer.peer} />
-          </div>
-        ))}
-        <div>
-          {/* // user video */}
-          {/* <p>{peer.displayName}</p> */}
-          <p>User Video</p>
-          <video
-            id="my-video"
-            muted
-            autoPlay
-            ref={userVideo}
-            playsInline
-          ></video>
-        </div>
+    <div className="vidBody">
+      <div className="cont">
+        <Grid
+          container
+          spacing={1}
+          alignItems="center"
+          justifyContent="center"
+          style={{ minHeight: '85vh' }}
+        >
+          {peers.map((peer, index) => (
+            <Grid item xs={12} sm={4}>
+              <p id="overlay" style={{ color: 'white' }}>
+                {peer.username}
+              </p>
+              <VideoFrame key={index} peer={peer.peer} />
+            </Grid>
+          ))}
+          <Grid item xs={12} sm={4}>
+            <p id="overlay" style={{ color: 'white' }}></p>
+            <video
+              id="my-video"
+              muted
+              autoPlay
+              ref={userVideo}
+              playsInline
+            ></video>
+          </Grid>
+        </Grid>
       </div>
+      <VideoCallBar
+        audio={audio}
+        audioHandler={audioHandler}
+        video={video}
+        videoHandler={videoHandler}
+        disconnect={disconnect}
+        isPresenting={isPresenting}
+        screenShare={screenShare}
+        stopScreenShare={stopScreenShare}
+      />
     </div>
   );
 };

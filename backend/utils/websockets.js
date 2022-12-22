@@ -163,22 +163,22 @@ const webSockets = (app) => {
     //   }
     // });
 
-    // //handle realtime messaging
-    // socket.on('message', (message) => {
-    //   console.log(socket.userName);
-    //   socket.broadcast.to(socket.roomID).emit('receive-message', {
-    //     sender: socket.userName,
-    //     message,
-    //     id: socket.id,
-    //     date: new Date(),
-    //   });
-    //   addMessage({
-    //     meetID: socket.roomID,
-    //     sender: socket.userName,
-    //     message,
-    //     date: new Date(),
-    //   });
-    // });
+    //handle realtime messaging
+    socket.on('message', (message) => {
+      console.log(socket.userName);
+      socket.broadcast.to(socket.roomID).emit('receive-message', {
+        sender: socket.userName,
+        message,
+        id: socket.id,
+        date: new Date(),
+      });
+      // addMessage({
+      //   meetID: socket.roomID,
+      //   sender: socket.userName,
+      //   message,
+      //   date: new Date(),
+      // });
+    });
     socket.on('returning signal', (payload) => {
       console.log('returning signal');
       io.to(payload.callerID).emit('receiving returned signal', {

@@ -8,6 +8,7 @@ import {
   Stack,
   Card,
   Drawer,
+  Button,
 } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff';
@@ -30,11 +31,16 @@ const VideoCallBar = ({
   videoHandler,
   disconnect,
   chats,
+  inputRef,
+  sendMessage,
   isPresenting,
   screenShare,
   stopScreenShare,
 }) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const toggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
+  };
   console.log('drawer', isDrawerOpen);
   return (
     <Box>
@@ -63,21 +69,23 @@ const VideoCallBar = ({
         {/* <IconButton color="secondary" onClick={}>
           <ChatBubbleOutlineIcon />
         </IconButton> */}
-        <IconButton
+        <Button
           color="secondary"
           edge="start"
-          onClick={(e) => {
-            setIsDrawerOpen(!isDrawerOpen);
-            console.log('onClick', isDrawerOpen);
-          }}
+          onClick={toggleDrawer}
+          // console.log('onClick', isDrawerOpen);
         >
           <ChatBubbleOutlineIcon />
-          <Drawer anchor="right" open={isDrawerOpen}>
-            <Box p={2} width="50vh">
-              <Messages />
-            </Box>
-          </Drawer>
-        </IconButton>
+        </Button>
+        <Drawer anchor="right" open={isDrawerOpen} onClose={toggleDrawer}>
+          <Box p={2} width="50vh">
+            <Messages
+              chats={chats}
+              inputRef={inputRef}
+              sendMessage={sendMessage}
+            />
+          </Box>
+        </Drawer>
         {isPresenting ? (
           <IconButton color="secondary" onClick={stopScreenShare}>
             <StopScreenShareIcon />

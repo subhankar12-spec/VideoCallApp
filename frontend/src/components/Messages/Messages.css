@@ -1,0 +1,9 @@
+.header {
+  text-align: center;
+}
+.messageBox {
+  overflow: auto;
+}
+.messages {
+  overflow-wrap: break-word;
+}

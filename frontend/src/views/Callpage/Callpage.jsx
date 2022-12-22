@@ -41,7 +41,7 @@ const Callpage = () => {
     // console.log('init');
     //get media stream from user (ask permission from browser)
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
+      audio: false,
       video: true,
     });
     userVideo.current.srcObject = userStream.current = stream;
@@ -348,6 +348,9 @@ const Callpage = () => {
         video={video}
         videoHandler={videoHandler}
         disconnect={disconnect}
+        chats={chats}
+        inputRef={inputRef}
+        sendMessage={sendMessage}
         isPresenting={isPresenting}
         screenShare={screenShare}
         stopScreenShare={stopScreenShare}
